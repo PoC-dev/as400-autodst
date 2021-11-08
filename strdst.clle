@@ -1,0 +1,78 @@
+             PGM        /* Poor man's DST handler for V4. */
+
+             /* Calculate from last day of given month. */
+             DCL        VAR(&DAY) TYPE(*CHAR) LEN(2) VALUE('31')
+             DCL        VAR(&DAYDEC) TYPE(*DEC) LEN(2 0)
+             DCL        VAR(&MONTH) TYPE(*CHAR) LEN(2) VALUE('03')
+             DCL        VAR(&YEAR) TYPE(*CHAR) LEN(2)
+             DCL        VAR(&YEARDEC) TYPE(*DEC) LEN(2 0)
+
+             DCL        VAR(&DATE) TYPE(*CHAR) LEN(8)
+             DCL        VAR(&SCDDATE) TYPE(*CHAR) LEN(10)
+
+             DCL        VAR(&LILBIN) TYPE(*CHAR) LEN(4)
+
+             DCL        VAR(&DOWSTR) TYPE(*CHAR) LEN(1)
+             DCL        VAR(&DOWDEC) TYPE(*DEC) LEN(5 0)
+             DCL        VAR(&DOWBIN) TYPE(*CHAR) LEN(4)
+
+             /* FIXME: Use and throw appropriate errors. */
+             DCL        VAR(&FC) TYPE(*CHAR) LEN(12)
+
+             DCL        VAR(&UTCOFFSET) TYPE(*CHAR) LEN(5)
+             DCL        VAR(&QHOUR) TYPE(*CHAR) LEN(2)
+             DCL        VAR(&HOUR) TYPE(*DEC) LEN(2 0)
+
+             /*--------------------------------------------------------*/
+             /* We need this to decide if we have already ran. */
+             RTVSYSVAL  SYSVAL(QUTCOFFSET) RTNVAR(&UTCOFFSET)
+
+             /* If we are not in DST, change vars accordingly. */
+             IF         COND(&UTCOFFSET *EQ '+0100') THEN(DO)
+             RTVSYSVAL  SYSVAL(QHOUR) RTNVAR(&QHOUR)
+             CHGVAR     VAR(&HOUR) VALUE(&QHOUR)
+             CHGVAR     VAR(&HOUR) VALUE(&HOUR + 1)
+             CHGVAR     VAR(&QHOUR) VALUE(&HOUR)
+             CHGSYSVAL  SYSVAL(QHOUR) VALUE(&QHOUR)
+             CHGSYSVAL  SYSVAL(QUTCOFFSET) VALUE('+0200')
+             ENDDO
+
+             /*--------------------------------------------------------*/
+             /* Get current year and incement (for next year). */
+             /* As if Y2K never was a problem, all dates are 2 digits! */
+             RTVSYSVAL  SYSVAL(QYEAR) RTNVAR(&YEAR)
+             CHGVAR     VAR(&YEARDEC) VALUE(&YEAR)
+             CHGVAR     VAR(&YEARDEC) VALUE(&YEARDEC + 1)
+             CHGVAR     VAR(&YEAR) VALUE(&YEARDEC)
+
+             /*--------------------------------------------------------*/
+             LOOPSTART:
+
+             /* Assemble all we have so far to an *YMD date. */
+             CHGVAR     VAR(&DATE) VALUE(&YEAR *CAT &MONTH *CAT &DAY)
+             CALLPRC    PRC(CEEDAYS) PARM(&DATE 'YYMMDD' &LILBIN &FC)
+             CALLPRC    PRC(CEEDYWK) PARM(&LILBIN &DOWBIN &FC)
+             CHGVAR     VAR(&DOWDEC) VALUE(%BINARY(&DOWBIN))
+
+             /* Go out of the loop if we hit a sunday. */
+             IF         COND(&DOWDEC = 1) THEN(GOTO CMDLBL(EXITLOOP))
+
+             /* No Sunday? Need to check the previous day! */
+             CHGVAR     VAR(&DAYDEC) VALUE(&DAY)
+             CHGVAR     VAR(&DAYDEC) VALUE(&DAYDEC - 1)
+             CHGVAR     VAR(&DAY) VALUE(&DAYDEC)
+
+             GOTO       CMDLBL(LOOPSTART)
+             /*--------------------------------------------------------*/
+
+             EXITLOOP:
+             CHGVAR     VAR(&DOWSTR) VALUE(&DOWDEC)
+             CHGVAR     VAR(&SCDDATE) VALUE(&DAY *CAT '.' *CAT +
+                          &MONTH *CAT '.' *CAT &YEAR)
+
+             /* Schedule job for next year. */
+             ADDJOBSCDE JOB(STRDST) CMD(CALL PGM(STRDST)) FRQ(*ONCE) +
+                          SCDDATE(&SCDDATE) SCDTIME('2:00') +
+                          MSGQ(QSYSOPR) TEXT('Switch Clock to CEST.')
+
+             ENDPGM
