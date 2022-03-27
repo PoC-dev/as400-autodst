@@ -18,10 +18,11 @@ You should have received a copy of the GNU General Public License along with
 
 What is it?
 ===========
-OS/400 V4 can't adjust to DST. Two times a year, the operator is required to
-do this adjustment by hand. Later releases finally learned to do that
-automatically. I've written two not very elegant ILE CL scripts to take over
-this duty, and relieve the operator from remembering to adjust the clock.
+OS/400 V4 - and earlier - can't automatically adjust to DST. Two times a year,
+the operator is required to do this adjustment by hand. Later releases finally
+learned to do that without intervention. I've written two not very elegant ILE
+CL scripts to take over this duty, and relieve the operator from remembering
+to adjust the clock.
 
 They do a crude check with the QUTCOFFSET system variable to decide if
 adjustment is needed, or not. A date/time check is *not* done for determining
@@ -64,6 +65,8 @@ run the job at the next IPL.
 
 If you are lazy, wait until adjustment should take place and simply run the
 appropriate script. Adjustment will be done and the job for next year created.
+
+End of March 2022, this solution proved to work.
 
 
 ToDos
