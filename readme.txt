@@ -77,5 +77,3 @@ Unify both scripts into one, while a command line parameter decides str or end.
 
 
 vim: textwidth=78 autoindent
-
-$Id: readme.txt,v 1.1.1.1 2021/10/26 15:03:26 poc Exp $
