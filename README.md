@@ -52,4 +52,3 @@ Laziness prohibited those being done so far: Works good enough…
 ----
 
 2024-09-05 poc@pocnet.net
-
