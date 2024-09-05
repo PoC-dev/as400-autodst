@@ -12,6 +12,8 @@ All variables as are hard coded for CET. Change as needed.
 
 Running the jobs creates scheduled job entries for the next year's run.
 
+**Note:** The CL scripts call ILE APIs, thus they must be compiled as ILE, and not as simple OPM CL! The remainder of the document considers this fact.
+
 ## How to use?
 First: Upload.
 
